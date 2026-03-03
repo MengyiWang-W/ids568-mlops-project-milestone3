@@ -18,6 +18,40 @@ Pipeline tasks:
 3. `register_model`
 DAG name: `train_pipeline`
 
+1.1 ML Lifecycle Alignment
+
+This project implements a production-style ML lifecycle including:
+
+Data preprocessing (feature engineering stage)
+
+Model training with hyperparameter experimentation
+
+Metric evaluation and threshold validation
+
+Model artifact logging
+
+Model registry versioning
+
+Production candidate promotion
+
+CI-based automated validation
+
+Reproducible containerized deployment
+
+This reflects the following ML lifecycle stages:
+
+Development → Experimentation (MLflow runs)
+
+Validation → CI accuracy threshold check
+
+Governance → Versioned model registry
+
+Promotion → Alias-based production selection
+
+Monitoring-ready architecture via retraining DAG
+
+This ensures traceability, reproducibility, and rollback capability.
+
 ## 2. How to Run the System
 ### 2.1 Start the System
 ```bash
@@ -37,6 +71,16 @@ password: airflow
 Trigger DAG:
 DAG: train_pipeline
 
+Optional: Trigger with custom hyperparameter
+
+Click "Trigger DAG with config"
+
+Example JSON:
+{
+  "C": 5.0
+}
+
+This enables dynamic hyperparameter experimentation via DAG configuration.
 Click "Trigger DAG"
 Expected result:
 All three tasks succeed
@@ -59,7 +103,8 @@ Model artifact under model
 
 Registered model: milestone3_model
 
-Model Version 1 visible
+Multiple model versions visible (e.g., v1–v12)
+Each DAG run generates a new MLflow run and potentially a new model version.
 
 ## 3. Idempotency & Retry Strategy
 DAG Idempotency
@@ -111,6 +156,13 @@ Previous model versions remain available
 
 Can manually transition versions via MLflow UI
 
+Production selection uses MLflow alias (@production).
+
+The best-performing model version is assigned the alias "production",
+allowing stable reference without relying on version numbers.
+
+Older versions remain available for rollback.
+
 ## 6. CI-Based Model Validation
 GitHub Actions workflow:
 
@@ -128,14 +180,15 @@ Run training script
 
 Run model_validation.py
 
-Validation rule:
-accuracy >= 0.6 required
+Validation rule:CI enforces a minimum performance threshold:accuracy >= 0.6
 
-If validation fails:
+If the trained model fails validation:
 
-Workflow exits with non-zero code
+• CI pipeline fails
+• Merge is blocked
+• No production promotion occurs
 
-Merge blocked
+This acts as a quality gate before model promotion.
 
 ## 7. Monitoring & Operational Notes
 Potential risks:
@@ -169,6 +222,9 @@ requirements.txt
 
 CI ensures automated verification.
 
+All services (Airflow, MLflow, PostgreSQL, Redis)
+are fully containerized and reproducible via Docker Compose.
+
 ## 9. Submission Checklist Alignment
 ✔ Containerized system
 ✔ Airflow DAG with 3 tasks
@@ -177,3 +233,19 @@ CI ensures automated verification.
 ✔ CI validation workflow
 ✔ Lineage report included
 ✔ README with run instructions
+
+## 10. Rubric Mapping
+| Requirement | Implementation |
+|-------------|---------------|
+| Containerized system | Docker Compose |
+| Airflow orchestration | train_pipeline DAG |
+| Retry & failure handling | Airflow default_args |
+| Hyperparameter experimentation | MLflow experiment tracking |
+| Model registry & versioning | milestone3_model |
+| CI validation gate | GitHub Actions workflow |
+| Idempotent pipeline | Non-destructive versioned runs |
+| Lifecycle governance | Alias-based production selection |
+
+
+Note: This project focuses on experiment tracking and registry governance.
+Automatic model serving deployment is not implemented in this milestone.
