@@ -38,7 +38,7 @@ def main():
     if experiment is None:
         mlflow.create_experiment(
            experiment_name,
-           artifact_location="/mlruns/milestone3"
+           artifact_location="mlruns/milestone3"
         )
     mlflow.set_experiment(experiment_name)
     data_path = os.path.join(os.path.dirname(__file__), "processed.csv")
